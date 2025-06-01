@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>www.PI3grupo4.com.br - Login SuperID</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <h2 id="mainTitle">Entrar com SuperID</h2>
+    <button id="superIdLoginButton">Entrar com SuperID</button>
+
+    <div id="qrCodeContainer">
+      <p id="qrCodePrompt">Escaneie o QR Code com seu aplicativo SuperID:</p>
+      <img id="qrCodeImage" src="" alt="QR Code de Login">
+      <p id="statusMessage"></p>
+    </div>
+
+    <div id="loggedInMessage">
+      <h3 class="status-success">Login Concluído com Sucesso!</h3>
+      <p>Bem-vindo(a), <span id="loggedInUserUID"></span>!</p>
+      <p>Login realizado em: <span id="loggedInTime"></span></p>
+    </div>
+  </div>
+  <script>
+    // --- URLs das suas Firebase Functions ---
+    const PERFORM_AUTH_FUNCTION_URL = "https://gerarqrcode-wac23jlrha-uc.a.run.app";
+    const GET_LOGIN_STATUS_FUNCTION_URL = "https://checkloginstatus-wac23jlrha-uc.a.run.app";
+    const CONFIRM_LOGIN_FUNCTION_URL = "https://confirmlogin-wac23jlrha-uc.a.run.app"; 
+
+    // --- Dados do site parceiro (SuperID Client) ---
+    const PARTNER_SITE_URL = "www.PI3Grupo4.com.br";
+    const PARTNER_API_KEY = "sbcOGxuHyn4wKeNOqqRhfzE+FNFlNFw8q/2KBJ8urFOZc7pcJx3Ty6VJjTh9BAQppHgpc4aFuhKQ4AdCJxHBb+uCHTXL0rJ+DnIlUyzssGaSJ9hzUBp8mpLFIOZdE189";
+
+    // --- Elementos HTML ---
+    const superIdLoginButton = document.getElementById('superIdLoginButton');
+    const qrCodeContainer = document.getElementById('qrCodeContainer');
+    const qrCodeImage = document.getElementById('qrCodeImage');
+    const statusMessage = document.getElementById('statusMessage');
+    const loggedInMessage = document.getElementById('loggedInMessage');
+    const loggedInUserUID = document.getElementById('loggedInUserUID');
+    const loggedInTime = document.getElementById('loggedInTime');
+    const mainTitle = document.getElementById('mainTitle');
+
+    // --- Variáveis de Estado ---
+    let loginToken = ''; // Armazena o token gerado pela performAuth
+    let statusCheckInterval = null; // Armazena o ID do intervalo para checagem de status
+    let currentFrontendCheckAttempts = 0; // Contador de tentativas do frontend
+    const FRONTEND_MAX_CHECK_ATTEMPTS = 30; // 30 tentativas * 2 segundos = 60 segundos (1 minuto de checagem)
+    const FRONTEND_CHECK_INTERVAL_MS = 2000; // Intervalo de 2 segundos entre as verificações
+
+    // --- Funções de Lógica ---
+
+    // Event Listener para o botão de login
+    superIdLoginButton.addEventListener('click', async () => {
+        // Esconde o botão e mostra o container do QR Code
+        superIdLoginButton.style.display = 'none';
+        qrCodeContainer.style.display = 'block';
+        loggedInMessage.style.display = 'none'; // Garante que a mensagem de sucesso está escondida
+        statusMessage.textContent = 'Gerando QR Code...';
+        statusMessage.className = ''; // Limpa classes de status anteriores
+        mainTitle.textContent = 'Aguardando Login SuperID';
+
+        try {
+            // Chama a Firebase Function para gerar o QR Code
+            const response = await fetch(PERFORM_AUTH_FUNCTION_URL, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    siteUrl: PARTNER_SITE_URL,
+                    apiKey: PARTNER_API_KEY
+                }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || `Erro HTTP: ${response.status} ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            console.log("Resposta performAuth:", data);
+
+            // Verifica se a resposta contém os dados esperados
+            if (data.qrCodeImageBase64 && data.loginToken) {
+                qrCodeImage.src = `data:image/png;base64,${data.qrCodeImageBase64}`;
+                loginToken = data.loginToken;
+                statusMessage.textContent = 'QR Code gerado. Escaneie com seu app SuperID.';
+                statusMessage.className = ''; // Reset de classe para mensagem padrão
+
+                // Inicia a checagem de status periodicamente
+                currentFrontendCheckAttempts = 0;
+                if (statusCheckInterval) clearInterval(statusCheckInterval); // Limpa qualquer intervalo anterior
+                statusCheckInterval = setInterval(checkLoginStatus, FRONTEND_CHECK_INTERVAL_MS);
+
+            } else {
+                throw new Error("Resposta inválida da função performAuth (QR Code ou Token ausente).");
+            }
+
+        } catch (error) {
+            console.error("Erro ao gerar QR Code:", error);
+            statusMessage.textContent = `Erro: ${error.message}. Por favor, tente novamente.`;
+            statusMessage.className = 'status-error'; // Aplica estilo de erro
+            qrCodeContainer.style.display = 'none'; // Esconde o QR Code
+            superIdLoginButton.style.display = 'block'; // Mostra o botão novamente
+            mainTitle.textContent = 'Entrar com SuperID';
+        }
+    });
+
+    // Função para verificar o status do login
+    async function checkLoginStatus() {
+        currentFrontendCheckAttempts++;
+
+        // Verifica o limite de tentativas do frontend
+        if (currentFrontendCheckAttempts > FRONTEND_MAX_CHECK_ATTEMPTS) {
+            clearInterval(statusCheckInterval); // Para as checagens
+            statusMessage.textContent = 'Tempo limite atingido para autenticação. Por favor, gere um novo QR Code.';
+            statusMessage.className = 'status-warning';
+            qrCodeContainer.style.display = 'none';
+            superIdLoginButton.style.display = 'block';
+            mainTitle.textContent = 'Entrar com SuperID';
+            return; // Sai da função
+        }
+
+        try {
+            // Chama a Firebase Function para verificar o status do loginToken
+            const response = await fetch(`${GET_LOGIN_STATUS_FUNCTION_URL}?loginToken=${loginToken}`);
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                // Lida com erros específicos do backend (expirado, limite excedido)
+                if (response.status === 410 || response.status === 429 || errorData.status === "expired_or_not_found" || errorData.status === "too_many_requests") {
+                    clearInterval(statusCheckInterval); // Para as checagens imediatamente
+                    statusMessage.textContent = `Erro de login: ${errorData.message || 'QR Code inválido ou expirado. Gere um novo QR Code.'}`;
+                    statusMessage.className = 'status-error';
+                    qrCodeContainer.style.display = 'none';
+                    superIdLoginButton.style.display = 'block';
+                    mainTitle.textContent = 'Entrar com SuperID';
+                    return; // Sai da função
+                }
+                throw new Error(errorData.error || `Erro HTTP: ${response.status} ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            console.log(`Tentativa ${currentFrontendCheckAttempts}/${FRONTEND_MAX_CHECK_ATTEMPTS}: Status: ${data.status}`);
+
+            if (data.status === "loggedIn") {
+                clearInterval(statusCheckInterval); // Para as checagens
+
+                // --- Exibe a mensagem de sucesso na UI ---
+                qrCodeContainer.style.display = 'none'; 
+                loggedInMessage.style.display = 'block';
+                loggedInUserUID.textContent = data.uid;
+                loggedInTime.textContent = new Date(data.loggedInAt).toLocaleString();
+                mainTitle.textContent = 'Login Bem-Sucedido!';
+
+                // --- NOVO PASSO: CHAMAR A FUNÇÃO `confirmLogin` ---
+                try {
+                    const confirmResponse = await fetch(CONFIRM_LOGIN_FUNCTION_URL, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({
+                            loginToken: loginToken, // O token do QR Code
+                            uid: data.uid // O UID recebido da função checkLoginStatus
+                        }),
+                    });
+
+                    if (!confirmResponse.ok) {
+                        const errorData = await confirmResponse.json();
+                        throw new Error(errorData.error || `Erro HTTP ao confirmar login: ${confirmResponse.status}`);
+                    }
+
+                    console.log("Login confirmado com sucesso pelo backend!");
+    
+
+                } catch (confirmError) {
+                    console.error("Erro ao chamar confirmLogin:", confirmError);
+                    statusMessage.textContent = `Erro ao finalizar login: ${confirmError.message}. Por favor, tente novamente.`;
+                    statusMessage.className = 'status-error';
+                    qrCodeContainer.style.display = 'none';
+                    superIdLoginButton.style.display = 'block';
+                    mainTitle.textContent = 'Entrar com SuperID';
+                }
+        
+
+            } else if (data.status === "pending") {
+                statusMessage.textContent = `Aguardando autenticação no SuperID... (${currentFrontendCheckAttempts} de ${FRONTEND_MAX_CHECK_ATTEMPTS} tentativas restantes)`;
+                statusMessage.className = ''; 
+            } else {
+                // Lidar com outros status inesperados ou erros do backend
+                clearInterval(statusCheckInterval);
+                statusMessage.textContent = `Status inesperado: ${data.status}. Por favor, tente novamente.`;
+                statusMessage.className = 'status-error';
+                qrCodeContainer.style.display = 'none';
+                superIdLoginButton.style.display = 'block';
+                mainTitle.textContent = 'Entrar com SuperID';
+            }
+
+        } catch (error) {
+            console.error("Erro ao verificar login:", error);
+            statusMessage.textContent = `Erro ao verificar status: ${error.message}. Tentando novamente...`;
+            statusMessage.className = 'status-warning'; 
+            // Continua tentando até o limite do frontend ou erro fatal/exclusão do token pelo backend
+        }
+    }
+
+    // Inicialização da visibilidade ao carregar a página
+    window.onload = () => {
+        qrCodeContainer.style.display = 'none';
+        loggedInMessage.style.display = 'none';
+    };
+  </script>
+</body>
+</html>

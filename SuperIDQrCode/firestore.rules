@@ -1,0 +1,16 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Regras para a coleção principal 'users'
+    match /users/{userId} {
+      allow read: if request.auth != null; // Permite ler o próprio documento do usuário
+      allow create, update: if request.auth != null && request.auth.uid == userId; // Permite criar/atualizar APENAS o próprio documento do usuário
+    }
+
+    // Regras para a subcoleção 'passwords' dentro de cada documento de usuário
+    match /users/{userId}/passwords/{document=**} { // {document=**} permite qualquer documento e subcoleção dentro de 'passwords'
+      allow read: if request.auth != null && request.auth.uid == userId; // Permite ler senhas APENAS do próprio usuário
+      allow create, update, delete: if request.auth != null && request.auth.uid == userId; // Permite criar, atualizar e deletar senhas APENAS do próprio usuário
+    }
+  }
+}

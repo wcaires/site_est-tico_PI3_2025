@@ -1,0 +1,149 @@
+body {
+    font-family: Arial, sans-serif;
+    display: flex; /* Para centralizar o conteúdo vertical e horizontalmente */
+    justify-content: center; /* Centraliza horizontalmente */
+    align-items: center; /* Centraliza verticalmente */
+    min-height: 100vh; /* Garante que o body ocupe a altura total da viewport */
+    background-color: #f0f2f5; /* Fundo claro para o corpo, como na imagem de fundo claro */
+    /* Para o fundo escuro (como na sua outra imagem), você pode mudar para: background-color: #000; */
+    margin: 0; /* Remove a margem padrão do body */
+    padding: 0;
+}
+
+/* Estilos para o contêiner principal que envolve a tela de login/QR Code */
+/* Usei .login-container e .container para compatibilidade com os dois HTMLs que discutimos */
+.login-container, .container {
+    background-color: #fff; /* Fundo branco do container */
+    padding: 40px; /* Mais padding para um visual mais espaçoso */
+    border-radius: 8px; /* Cantos arredondados, como nas suas imagens */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* Sombra suave */
+    text-align: center;
+    width: 100%;
+    max-width: 350px; /* Largura máxima para os containers de login, ajustável */
+    margin: auto; /* Garante centralização horizontal mesmo sem flexbox no body */
+}
+
+/* Estilos para títulos (h1, h2, h3) */
+h1, h2, h3 {
+    color: #333; /* Cor escura para o texto */
+    margin-bottom: 30px; /* Espaço abaixo dos títulos */
+    font-size: 2em; /* Tamanho maior para o título principal "Login" */
+}
+
+/* Estilos específicos para a tela de login tradicional (inputs) */
+.input-group {
+    margin-bottom: 20px; /* Espaço entre os campos de input */
+    text-align: center;
+}
+
+.input-group input {
+    width: calc(100% - 40px); /* Ocupa a largura total menos o padding */
+    padding: 15px 20px; /* Padding interno para os campos */
+    border: 1px solid #ddd; /* Borda fina */
+    border-radius: 8px; /* Cantos mais arredondados para os inputs */
+    font-size: 16px;
+    background-color: #ececec; /* Cor cinza claro para os inputs, como nas suas imagens */
+    color: #333; /* Cor do texto digitado */
+}
+
+.input-group input::placeholder {
+    color: #888; /* Cor do texto placeholder */
+}
+
+.input-group input:focus {
+    border-color: #007bff; /* Borda azul ao focar */
+    outline: none; /* Remove o outline padrão do navegador */
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25); /* Sombra ao focar */
+}
+
+/* Estilos para botões gerais e o botão principal (Entrar na sua conta / Entrar com SuperID) */
+/* Usa #superIdLoginButton para o botão específico do SuperID na sua página atual */
+.btn-primary, button { /* Aplica a todos os botões e ao botão principal */
+    background-color: #5C4033; /* Marrom escuro como nas suas imagens */
+    color: white;
+    padding: 15px 20px;
+    border: none;
+    border-radius: 8px; /* Cantos mais arredondados para os botões */
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    width: 100%; /* Ocupa a largura total do container */
+    margin-top: 10px; /* Espaço acima do botão */
+    transition: background-color 0.3s ease; /* Transição suave no hover */
+}
+
+.btn-primary:hover, button:hover {
+    background-color: #4A3329; /* Um tom um pouco mais escuro no hover */
+}
+
+/* Estilo para o link "Entre com Super ID" */
+.super-id-link {
+    display: block; /* Garante que o link ocupe sua própria linha */
+    margin-top: 25px; /* Espaço acima do link */
+    color: #5C4033; /* Mesma cor do botão ou uma que combine */
+    text-decoration: none; /* Remove sublinhado padrão */
+    font-weight: bold;
+    font-size: 16px;
+    transition: color 0.3s ease;
+}
+
+.super-id-link:hover {
+    color: #4A3329;
+    text-decoration: underline; /* Adiciona sublinhado no hover */
+}
+
+/* Estilos específicos para a tela do QR Code (do seu index.html existente) */
+#qrCodeContainer {
+    margin-top: 20px;
+    /* Por padrão, este container é escondido via JS */
+}
+
+#qrCodeImage {
+    max-width: 100%;
+    height: auto;
+    border: 1px solid #eee; /* Borda leve para a imagem do QR Code */
+    padding: 5px;
+    background-color: white;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+
+#qrCodePrompt {
+    font-size: 1.1em;
+    color: #555;
+    margin-bottom: 15px;
+}
+
+#statusMessage {
+    margin-top: 15px;
+    font-weight: bold;
+    color: #777; /* Cor padrão para mensagens de status */
+}
+
+/* Cores para mensagens de status (do seu JS) */
+.status-success {
+    color: #28a745 !important; /* Verde para sucesso */
+}
+
+.status-error {
+    color: #dc3545 !important; /* Vermelho para erro */
+}
+
+.status-warning {
+    color: #ffc107 !important; /* Amarelo para aviso */
+}
+
+/* Estilos para a mensagem de "Login Concluído com Sucesso!" */
+#loggedInMessage {
+    margin-top: 20px;
+    padding: 20px;
+    border: 1px solid #d4edda;
+    border-radius: 5px;
+    background-color: #d4edda;
+    color: #155724;
+}
+
+#loggedInMessage h3 {
+    color: #155724;
+    margin-bottom: 10px;
+}

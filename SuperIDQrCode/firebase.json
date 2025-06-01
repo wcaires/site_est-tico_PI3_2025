@@ -1,0 +1,65 @@
+{
+  "hosting": {
+    "public": "functions/src", 
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html" 
+      }
+    ],
+      "rewrites": [
+    {
+      "source": "**",
+      "destination": "/login-tradicional.html" 
+    }
+  ]
+  },
+  "firestore": {
+    "database": "(default)",
+    "location": "southamerica-east1",
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log",
+        "*.local"
+      ],
+      "predeploy": [
+        "npm --prefix \"$RESOURCE_DIR\" run lint",
+        "npm --prefix \"$RESOURCE_DIR\" run build"
+      ]
+    }
+  ],
+  "emulators": {
+    "firestore": {
+      "port": 9876
+    },
+    "functions": {
+      "port": 9877
+    },
+    "ui": {
+      "port": 9878
+    },
+    "auth": {
+      "port": 9879
+    },
+    "database": {
+      "port": 9880
+    },
+    "hosting": {
+      "port": 9881
+    }
+  }
+}
